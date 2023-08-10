@@ -1,0 +1,15 @@
+{
+    "haskell.formattingProvider": "fourmolu",
+    "customLocalFormatters.formatters": [
+        {
+            "command": "LANG=C.UTF-8 fourmolu --stdin-input-file . --ghc-opt -XUnicodeSyntax --ghc-opt -XImportQualifiedPost",
+            "languages": [
+                "haskell"
+            ]
+        }
+    ],
+    "editor.defaultFormatter": "jkillian.custom-local-formatters",
+    "[haskell]": {
+        "editor.defaultFormatter": "jkillian.custom-local-formatters"
+    }
+}

@@ -1,0 +1,69 @@
+cabal-version: 3.4
+name:          htmx-demo
+version:       0.1.0.0
+synopsis:      HTMX Demo
+license:       MIT
+license-file:  LICENSE
+author:        Unisay
+maintainer:    Unisay@users.noreply.github.com
+category:      Web
+build-type:    Simple
+
+common opts
+  default-language:   GHC2021
+  default-extensions:
+    BlockArguments
+    DataKinds
+    DerivingStrategies
+    OverloadedStrings
+    TypeApplications
+    TypeOperators
+    UnicodeSyntax
+
+  ghc-options:
+    -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wmissing-deriving-strategies -Wunused-foralls -Wunused-foralls
+    -fprint-explicit-foralls -fprint-explicit-kinds
+
+  build-depends:
+    , base    ^>=4.18
+    , relude  ^>=1.2
+
+  mixins:
+    base hiding (Prelude),
+    relude (Relude as Prelude, Relude.Container.One),
+    relude
+
+library
+  import:          opts
+  exposed-modules: App
+  hs-source-dirs:  lib
+  build-depends:
+    , http-media      ^>=0.8
+    , lucid2          ^>=0.0.20230706
+    , servant         ^>=0.20
+    , servant-server  ^>=0.20
+    , warp            ^>=3.3.28
+
+  exposed-modules:
+    Html
+    Layout
+    Lucid.Extended
+    Lucid.Hx
+    Page.Docs
+    Page.Home
+
+executable htmx-demo
+  import:         opts
+  main-is:        Main.hs
+  hs-source-dirs: exe
+  build-depends:
+    , htmx-demo
+    , with-utf8  ^>=1.0.2.4
+
+test-suite htmx-demo-test
+  import:         opts
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is:        Main.hs
+  build-depends:  htmx-demo
