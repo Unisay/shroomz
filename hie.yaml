@@ -1,10 +1,10 @@
 cradle:
   cabal:
     - path: "lib"
-      component: "lib:htmx-demo"
+      component: "lib:shroomz"
 
     - path: "exe/Main.hs"
-      component: "htmx-demo:exe:htmx-demo"
+      component: "shroomz:exe:shroomz"
 
     - path: "test"
-      component: "htmx-demo:test:htmx-demo-test"
+      component: "shroomz:test:shroomz-test"

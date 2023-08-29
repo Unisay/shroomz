@@ -1,5 +1,5 @@
 comma-style: leading
-column-limit: 80
+column-limit: 120
 diff-friendly-import-export: true
 function-arrows: leading
 haddock-style: multi-line

@@ -7,10 +7,11 @@ module Lucid.Extended
   , ariaExpanded_
   , ariaHidden_
   , dataTarget_
+  , ionIcon_
   ) where
 
 import Lucid
-import Lucid.Base (makeAttributes)
+import Lucid.Base (makeAttributes, makeElement)
 
 type Html_ = Html ()
 
@@ -31,3 +32,6 @@ ariaHidden_ = makeAttributes "aria-hidden" . show
 
 dataTarget_ ∷ Text → Attributes
 dataTarget_ = makeAttributes "data-target"
+
+ionIcon_ ∷ Text → Html_
+ionIcon_ name = makeElement "ion-icon" [name_ name] none_

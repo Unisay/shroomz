@@ -38,7 +38,7 @@
 
           devenv = {
             shells.default = {
-              name = "htmx-demo";
+              name = "shroomz";
 
               imports = [
                 # This is just like the imports in devenv.nix.
@@ -50,8 +50,10 @@
               packages = [
                 config.packages.default
                 hpkgs.cabal-fmt
+                hpkgs.ghcid
                 hpkgs.hlint
                 hpkgs.fourmolu_0_13_0_0
+                pkgs.just
               ];
 
               languages.haskell = {
