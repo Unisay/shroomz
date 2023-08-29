@@ -16,6 +16,7 @@ import Network.Wai.Middleware.RequestSizeLimit
   ( defaultRequestSizeLimitSettings
   , requestSizeLimitMiddleware
   )
+import Network.Wai.Middleware.Static (only, staticPolicy)
 import Shroomz (Shroomz)
 import Shroomz qualified
 import Shroomz.Component.Path qualified as Path
@@ -61,6 +62,17 @@ middleware ∷ Wai.Middleware
 middleware =
   logStdoutDev
     . requestSizeLimitMiddleware defaultRequestSizeLimitSettings
+    . staticPolicy
+      ( only
+          [ ("favicon.ico", "static/images/favicon.ico")
+          , ("favicon-16x16.png", "static/images/favicon-16x16.png")
+          , ("favicon-32x32.png", "static/images/favicon-32x32.png")
+          , ("apple-touch-icon.png", "static/images/apple-touch-icon.png")
+          , ("android-chrome-192x192.png", "static/images/android-chrome-192x192.png")
+          , ("android-chrome-512x512.png", "static/images/android-chrome-512x512.png")
+          , ("site.webmanifest", "static/site.webmanifest")
+          ]
+      )
 
 newtype HtmxInfo = HtmxInfo {isHtmxRequest ∷ Bool}
 
