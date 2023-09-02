@@ -1,2 +1,4 @@
 .devenv
+.vscode
 dist-newstyle/
+cabal.project.local

@@ -3,6 +3,7 @@ module Shroomz
   , new
   , renderPath
   , updatePath
+  , diagnosticInfo
   ) where
 
 import Data.Map.Strict qualified as Map
@@ -10,37 +11,46 @@ import Lucid.Extended (Html_)
 import Shroomz.Component
   ( Component (..)
   , ComponentWithState (..)
+  , statelessComponent
   , withComponentWithState
   )
-import Shroomz.Component.Builder (ComponentBuilder)
-import Shroomz.Component.Builder qualified as Builder
-import Shroomz.Component.Path (ComponentPath, isParentOf, lastSlot)
+import Shroomz.Component.Path (ComponentPath)
 import Shroomz.Component.Path qualified as Path
-import Shroomz.Component.Slot (Slot (..))
-import Text.Show (Show (..))
 import Web.FormUrlEncoded (lookupUnique, urlDecodeForm)
-import Prelude hiding (get, show, state)
+import Prelude hiding (get, state)
 
 newtype Shroomz = Shroomz {components ∷ Map ComponentPath ComponentWithState}
 
 -- | Create a new app with a single root component.
-new ∷ ComponentWithState → ComponentBuilder → Shroomz
-new root builder = Shroomz {components = Builder.build root builder}
+new ∷ ComponentWithState → Shroomz
+new root = Shroomz {components = componentsFromRoot root}
+
+componentsFromRoot ∷ ComponentWithState → Map ComponentPath ComponentWithState
+componentsFromRoot = go Path.Root
+ where
+  go
+    ∷ ComponentPath
+    → ComponentWithState
+    → Map ComponentPath ComponentWithState
+  go path cws@(ComponentWithState Component {children} _) =
+    Map.singleton path cws
+      <> Map.foldMapWithKey (go . Path.snocSlot path) children
 
 findComponent ∷ Shroomz → ComponentPath → Maybe ComponentWithState
 findComponent app path = Map.lookup path (components app)
 
 getComponent ∷ Shroomz → ComponentPath → ComponentWithState
-getComponent app path = fromMaybe noComponent $ findComponent app path
+getComponent app path = fromMaybe noComponent (findComponent app path)
  where
   noComponent =
-    ComponentWithState
+    statelessComponent
       Component
-        { render = \_path _state _children → "Component not found"
+        { render = \_path _state _children →
+            "Component not found: " <> fromString (toString $ Path.render path)
         , update = const
         , parseAction = const Nothing
+        , children = mempty
         }
-      ()
 
 updateComponentState
   ∷ Shroomz → ComponentPath → (∀ s m. Component s m → s → s) → Shroomz
@@ -50,28 +60,17 @@ updateComponentState app path f =
   updateComponentWithState cws = withComponentWithState cws \comp state →
     ComponentWithState comp (f comp state)
 
-children ∷ Shroomz → ComponentPath → Map Slot ComponentWithState
-children app parentPath =
-  Map.fromList
-    [ (childSlot, component)
-    | (childPath, component) ← Map.toList (components app)
-    , isParentOf parentPath childPath
-    , childSlot ← maybeToList (lastSlot childPath)
-    ]
-
 renderPath ∷ Shroomz → ComponentPath → Html_
 renderPath app path =
   withComponentWithState (getComponent app path) \comp state → do
-    render comp path state \slot →
-      case Map.lookup slot slotComponents of
+    render comp path state \slot → do
+      let cpath = Path.snocSlot path slot
+      case Map.lookup cpath (components app) of
+        Just child → renderChild cpath child
         Nothing →
-          "Component not found: "
-            <> fromString (show path <> ":" <> show slot)
-        Just child →
-          renderChild (Path.snocSlot path slot) child
+          fromString . toString $
+            "Component not found: " <> Path.render cpath
  where
-  slotComponents = children app path
-
   renderChild ∷ ComponentPath → ComponentWithState → Html_
   renderChild cpath component =
     withComponentWithState component \comp state →
@@ -90,3 +89,9 @@ updatePath app path body = (app', renderPath app' path)
             case parseAction comp actionValue of
               Nothing → state
               Just action → update comp state action
+
+diagnosticInfo ∷ MonadIO m ⇒ Shroomz → m ()
+diagnosticInfo Shroomz {..} = liftIO do
+  putTextLn "Shroomz components:"
+  for_ (Map.toList components) \(path, _) → do
+    putTextLn $ Path.render path

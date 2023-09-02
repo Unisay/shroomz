@@ -8,6 +8,7 @@ import Control.Concurrent
   , putMVar
   , takeMVar
   )
+import Demo.Index qualified as Index
 import Foreign.Store
   ( Store (..)
   , lookupStore
@@ -15,6 +16,7 @@ import Foreign.Store
   , storeAction
   , withStore
   )
+import GHC.IO.Handle (hIsTerminalDevice)
 import Network.Wai.Handler.Warp qualified as Warp
 import Shroomz.Init (initialize)
 import Prelude hiding (newEmptyMVar, putMVar, takeMVar)
@@ -39,29 +41,27 @@ update = do
       restartAppInNewThread tidStore
       putStrLn "Dev server has restarted."
  where
-  doneStore ∷ Store (MVar ())
+  doneStore ∷ Store (MVar Done)
   doneStore = Store 0
 
   -- shut the server down with killThread and wait for the done signal
   restartAppInNewThread ∷ Store (IORef ThreadId) → IO ()
   restartAppInNewThread tidStore = modifyStoredIORef tidStore \tid → do
     killThread tid
-    withStore doneStore takeMVar
+    _done ← withStore doneStore takeMVar
     readStore doneStore >>= start
 
   -- Start the server in a separate thread.
-  start
-    ∷ MVar ()
-    -- \^ Written to when the thread is killed.
-    → IO ThreadId
+  start ∷ MVar Done → IO ThreadId
   start done = do
-    (port, app) ← initialize
-    forkFinally
-      (Warp.runSettings (Warp.setPort port Warp.defaultSettings) app)
-      -- Note that this implies concurrency
-      -- between shutdownApp and the next app that is starting.
-      -- Normally this should be fine
-      \_ → putMVar done ()
+    terminal ← hIsTerminalDevice stdout
+    putStrLn $ "is terminal: " <> show terminal
+    (port, app) ← initialize Index.app
+    let run = do
+          isTerminal ← hIsTerminalDevice stdout
+          if not isTerminal then error "stdout is not a terminal" else pass
+          Warp.run port app
+    forkFinally run \_ → putMVar done Done
 
 -- | kill the server
 shutdown ∷ IO ()
@@ -80,3 +80,5 @@ modifyStoredIORef ∷ Store (IORef a) → (a → IO a) → IO ()
 modifyStoredIORef store f = withStore store \ref → do
   v ← readIORef ref
   f v >>= writeIORef ref
+
+data Done = Done

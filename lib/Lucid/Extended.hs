@@ -33,5 +33,5 @@ ariaHidden_ = makeAttributes "aria-hidden" . show
 dataTarget_ ∷ Text → Attributes
 dataTarget_ = makeAttributes "data-target"
 
-ionIcon_ ∷ Text → Html_
-ionIcon_ name = makeElement "ion-icon" [name_ name] none_
+ionIcon_ ∷ Text → Attributes → Html_
+ionIcon_ name attrs = makeElement "ion-icon" [name_ name <> attrs] none_

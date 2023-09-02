@@ -1,4 +1,6 @@
-module Demo.StatefulComponent (app) where
+module Demo.StatefulComponent
+  ( new
+  ) where
 
 import Lucid.Extended
   ( Attributes
@@ -14,15 +16,18 @@ import Lucid.Extended
   , value_
   )
 import Lucid.Hx (hxPost_, hxSwap_, hxTarget_, hxTrigger_)
-import Shroomz (Shroomz, new)
-import Shroomz.Component (Component (..), ComponentWithState (..))
+import Shroomz.Component
+  ( Component (..)
+  , ComponentWithState (..)
+  , statefulComponent
+  )
 import Shroomz.Component.Path (ComponentPath)
 import Shroomz.Component.Slot (Slot)
 import Web.HttpApiData (ToHttpApiData (toUrlPiece))
 import Prelude hiding (State, state)
 
-app ∷ Shroomz
-app = Shroomz.new (ComponentWithState counter 42) pass
+new ∷ ComponentWithState
+new = statefulComponent counter 42
 
 type State = Integer
 
@@ -35,6 +40,7 @@ counter =
     { render = _render
     , update = _update
     , parseAction = readMaybe . toString
+    , children = mempty
     }
 
 _update ∷ State → Action → State
@@ -58,7 +64,7 @@ _render path progress _renderSlot =
             , action_ Decrement
             , class_ "button is-large is-white"
             ]
-            (ionIcon_ "remove-circle-outline")
+            (ionIcon_ "remove-circle-outline" mempty)
         div_ [class_ "column"] do
           let progressClass
                 | progress >= 66 = "is-success"
@@ -79,7 +85,7 @@ _render path progress _renderSlot =
             , action_ Increment
             , class_ "button is-large is-white is-unselectable"
             ]
-            (ionIcon_ "add-circle-outline")
+            (ionIcon_ "add-circle-outline" mempty)
  where
   action_ ∷ Action → Attributes
   action_ a = name_ "action" <> value_ (show a)

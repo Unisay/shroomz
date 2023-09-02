@@ -11,5 +11,8 @@
     "editor.defaultFormatter": "jkillian.custom-local-formatters",
     "[haskell]": {
         "editor.defaultFormatter": "jkillian.custom-local-formatters"
+    },
+    "[shellscript]": {
+        "editor.defaultFormatter": "foxundermoon.shell-format"
     }
 }

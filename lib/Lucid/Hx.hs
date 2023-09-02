@@ -1,5 +1,6 @@
 module Lucid.Hx where
 
+import Data.Text qualified as Text
 import Lucid.Base
 
 -- | <https://htmx.org/attributes/hx-boost/>
@@ -67,8 +68,8 @@ hxPrompt_ ∷ Text → Attributes
 hxPrompt_ = makeAttributes "data-hx-prompt"
 
 -- | <https://htmx.org/attributes/hx-push-url/>
-hxPushUrl_ ∷ Text → Attributes
-hxPushUrl_ = makeAttributes "data-hx-push-url"
+hxPushUrl_ ∷ Bool → Attributes
+hxPushUrl_ = makeAttributes "data-hx-push-url" . Text.toLower . show
 
 -- | <https://htmx.org/attributes/hx-put/>
 hxPut_ ∷ Text → Attributes

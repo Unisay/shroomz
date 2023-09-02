@@ -1,7 +1,6 @@
 module Shroomz.Init (initialize) where
 
 import Data.List.NonEmpty qualified as NE
-import Demo.StatefulComponent qualified as StatefulComponent
 import Lucid.Extended qualified as Lucid
 import Network.HTTP.Types
   ( Header
@@ -17,15 +16,18 @@ import Network.Wai.Middleware.RequestSizeLimit
   , requestSizeLimitMiddleware
   )
 import Network.Wai.Middleware.Static (only, staticPolicy)
+import Relude.Extra.Tuple (toSnd)
 import Shroomz (Shroomz)
 import Shroomz qualified
+import Shroomz.Component.Path (ComponentPath)
 import Shroomz.Component.Path qualified as Path
 import Wrapper (wrapBody)
 import Prelude hiding (get)
 
-initialize ∷ IO (Int, Wai.Application)
-initialize = do
-  var ← newTVarIO StatefulComponent.app
+initialize ∷ Shroomz → IO (Int, Wai.Application)
+initialize initialApp = do
+  Shroomz.diagnosticInfo initialApp
+  var ← newTVarIO initialApp
   pure $ (3000,) $ middleware $ \request withResponse → do
     app ← readTVarIO var
     let headers = Wai.requestHeaders request
@@ -41,7 +43,7 @@ initialize = do
         withResponse response
       _ → withResponse $ Wai.responseBuilder methodNotAllowed405 [] mempty
 
-respondGet ∷ Shroomz → HtmxInfo → Path.ComponentPath → Wai.Response
+respondGet ∷ Shroomz → HtmxInfo → ComponentPath → Wai.Response
 respondGet app HtmxInfo {..} path = do
   let markup = Shroomz.renderPath app path
   let responseBody =
@@ -50,7 +52,7 @@ respondGet app HtmxInfo {..} path = do
   let responseHeaders = []
   Wai.responseLBS ok200 responseHeaders responseBody
 
-respondPost ∷ Shroomz.Shroomz → Path.ComponentPath → LByteString → (Shroomz, Wai.Response)
+respondPost ∷ Shroomz → ComponentPath → LByteString → (Shroomz, Wai.Response)
 respondPost app path body =
   (updatedApp, Wai.responseLBS ok200 responseHeaders responseBody)
  where
@@ -63,15 +65,17 @@ middleware =
   logStdoutDev
     . requestSizeLimitMiddleware defaultRequestSizeLimitSettings
     . staticPolicy
-      ( only
-          [ ("favicon.ico", "static/images/favicon.ico")
-          , ("favicon-16x16.png", "static/images/favicon-16x16.png")
-          , ("favicon-32x32.png", "static/images/favicon-32x32.png")
-          , ("apple-touch-icon.png", "static/images/apple-touch-icon.png")
-          , ("android-chrome-192x192.png", "static/images/android-chrome-192x192.png")
-          , ("android-chrome-512x512.png", "static/images/android-chrome-512x512.png")
-          , ("site.webmanifest", "static/site.webmanifest")
-          ]
+      ( let static = ("static/" <>)
+            image = toSnd (static "images/" <>)
+         in only
+              [ image "favicon.ico"
+              , image "favicon-16x16.png"
+              , image "favicon-32x32.png"
+              , image "apple-touch-icon.png"
+              , image "android-chrome-192x192.png"
+              , image "android-chrome-512x512.png"
+              , ("site.webmanifest", static "site.webmanifest")
+              ]
       )
 
 newtype HtmxInfo = HtmxInfo {isHtmxRequest ∷ Bool}

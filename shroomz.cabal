@@ -51,20 +51,23 @@ library
     , http-media             ^>=0.8
     , http-types             ^>=0.12.3
     , lucid2                 ^>=0.0.20230706
+    , pretty-show            ^>=1.10
     , scotty                 ^>=0.12.1
     , some                   ^>=1.0.5
+    , string-interpolate     ^>=0.3.2.1
     , wai                    ^>=3.2.3
     , wai-extra              ^>=3.1.13
     , wai-middleware-static  ^>=0.9.2
 
   exposed-modules:
-    Demo.DynamicChildren
+    Demo.DynamicStatefulChildren
+    Demo.Index
+    Demo.ParentChild
     Demo.StatefulComponent
     Lucid.Extended
     Lucid.Hx
     Shroomz
     Shroomz.Component
-    Shroomz.Component.Builder
     Shroomz.Component.Path
     Shroomz.Component.Slot
     Shroomz.Dev

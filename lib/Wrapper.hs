@@ -16,7 +16,14 @@ wrapBody body = html_ [term "data-bs-theme" "dark"] do
       , crossorigin_ "anonymous"
       ]
       none_
-    link_ [rel_ "manifest", href_ "/site.webmanifest"]
+    script_
+      [ src_ "https://unpkg.com/hyperscript.org@0.9.11"
+      ]
+      none_
+    link_
+      [ rel_ "manifest"
+      , href_ "/site.webmanifest"
+      ]
     link_
       [ rel_ "stylesheet"
       , href_ "https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"

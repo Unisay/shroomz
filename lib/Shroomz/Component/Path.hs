@@ -65,7 +65,7 @@ render = \case
   Root → "/"
   Path slot rest →
     ("/" <> renderSlot slot)
-      & maybe identity ((<>) . render) rest
+      & maybe identity (flip mappend . render) rest
  where
   renderSlot = \case
     SlotNamed name → toUrlPiece name
