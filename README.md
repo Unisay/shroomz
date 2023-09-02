@@ -1,4 +1,4 @@
-# Shroomz
+# Shroomz 🍄🍄🍄
 
 Component-based web-application framework experiment,
 wirtten in Haskell using HTMX & Bulma CSS.
