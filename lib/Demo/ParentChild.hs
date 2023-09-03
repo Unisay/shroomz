@@ -24,6 +24,7 @@ import Lucid.Hx (hxPost_, hxSwap_, hxTarget_, hxTrigger_)
 import Shroomz.Component
   ( Component (..)
   , ComponentWithState
+  , parseActionField
   , statefulComponent
   )
 import Shroomz.Component.Path (ComponentPath)
@@ -53,8 +54,8 @@ toggler =
   Component
     { render = _render
     , update = \oldState Toggle → toggle oldState
-    , parseAction = readMaybe . toString
     , children = Map.singleton childSlot StatefulComponent.new
+    , parseAction = parseActionField "action"
     }
 
 _render ∷ ComponentPath → State → (Slot → Html_) → Html_

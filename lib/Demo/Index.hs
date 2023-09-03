@@ -25,7 +25,7 @@ import Lucid.Extended
   , tr_
   )
 import Shroomz (Shroomz, new)
-import Shroomz.Component (Component (..), statelessComponent)
+import Shroomz.Component (Component (..), parseActionField, statelessComponent)
 import Shroomz.Component.Path (ComponentPath, snocSlot)
 import Shroomz.Component.Path qualified as Path
 import Shroomz.Component.Slot (Slot (SlotNamed))
@@ -44,7 +44,7 @@ indexComponent =
   Component
     { render = _render
     , update = _update
-    , parseAction = readMaybe . toString
+    , parseAction = parseActionField "action"
     , children =
         Map.fromList
           [ (slotStatefulComponent, StatefulComponent.new)

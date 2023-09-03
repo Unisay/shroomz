@@ -3,6 +3,7 @@ module Shroomz.Component where
 import Lucid.Extended (Html_, none_)
 import Shroomz.Component.Path (ComponentPath)
 import Shroomz.Component.Slot (Slot)
+import Web.FormUrlEncoded (Form, lookupUnique)
 
 data ComponentWithState
   = ∀ state action. ComponentWithState (Component state action) state
@@ -21,7 +22,7 @@ statelessComponent c = ComponentWithState c ()
 data Component state action = Component
   { render ∷ ComponentPath → state → (Slot → Html_) → Html_
   , update ∷ state → action → state
-  , parseAction ∷ Text → Maybe action
+  , parseAction ∷ Form → Maybe action
   , children ∷ Map Slot ComponentWithState
   }
 
@@ -30,6 +31,11 @@ emptyComponent =
   Component
     { render = \_path _state _children → none_
     , update = const
-    , parseAction = \_input → Nothing
+    , parseAction = \_form → Nothing
     , children = mempty
     }
+
+parseActionField ∷ Read action ⇒ Text → Form → Maybe action
+parseActionField field form = do
+  value ← rightToMaybe $ lookupUnique field form
+  readMaybe $ toString value

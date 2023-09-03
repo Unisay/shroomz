@@ -16,7 +16,7 @@ import Shroomz.Component
   )
 import Shroomz.Component.Path (ComponentPath)
 import Shroomz.Component.Path qualified as Path
-import Web.FormUrlEncoded (lookupUnique, urlDecodeForm)
+import Web.FormUrlEncoded (urlDecodeForm)
 import Prelude hiding (get, state)
 
 newtype Shroomz = Shroomz {components ∷ Map ComponentPath ComponentWithState}
@@ -83,12 +83,9 @@ updatePath app path body = (app', renderPath app' path)
     case urlDecodeForm body of
       Left _err → state
       Right form →
-        case lookupUnique "action" form of
-          Left _err → state
-          Right actionValue →
-            case parseAction comp actionValue of
-              Nothing → state
-              Just action → update comp state action
+        case parseAction comp form of
+          Nothing → state
+          Just action → update comp state action
 
 diagnosticInfo ∷ MonadIO m ⇒ Shroomz → m ()
 diagnosticInfo Shroomz {..} = liftIO do

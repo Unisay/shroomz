@@ -19,6 +19,7 @@ import Lucid.Hx (hxPost_, hxSwap_, hxTarget_, hxTrigger_)
 import Shroomz.Component
   ( Component (..)
   , ComponentWithState (..)
+  , parseActionField
   , statefulComponent
   )
 import Shroomz.Component.Path (ComponentPath)
@@ -39,7 +40,7 @@ counter =
   Component
     { render = _render
     , update = _update
-    , parseAction = readMaybe . toString
+    , parseAction = parseActionField "action"
     , children = mempty
     }
 
