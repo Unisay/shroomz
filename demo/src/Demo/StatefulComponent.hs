@@ -27,7 +27,7 @@ import Shroomz.Component.Slot (Slot)
 import Web.HttpApiData (ToHttpApiData (toUrlPiece))
 import Prelude hiding (State, state)
 
-new ∷ ComponentWithState
+new ∷ Applicative m ⇒ ComponentWithState m
 new = statefulComponent counter 42
 
 type State = Integer
@@ -35,7 +35,7 @@ type State = Integer
 data Action = Decrement | Increment
   deriving stock (Show, Read)
 
-counter ∷ Component State Action
+counter ∷ Applicative m ⇒ Component m State Action
 counter =
   Component
     { render = _render
@@ -44,10 +44,11 @@ counter =
     , children = mempty
     }
 
-_update ∷ State → Action → State
-_update oldState = \case
-  Decrement → 0 `max` oldState - step
-  Increment → oldState + step `min` 100
+_update ∷ Applicative m ⇒ State → Action → m State
+_update oldState =
+  pure . \case
+    Decrement → 0 `max` oldState - step
+    Increment → oldState + step `min` 100
  where
   step = 5
 

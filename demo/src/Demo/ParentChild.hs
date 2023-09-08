@@ -32,7 +32,7 @@ import Shroomz.Component.Slot (Slot (..))
 import Web.HttpApiData (ToHttpApiData (toUrlPiece))
 import Prelude hiding (State, state)
 
-new ∷ ComponentWithState
+new ∷ Applicative m ⇒ ComponentWithState m
 new = statefulComponent toggler Visible
 
 data State = Visible | Hidden
@@ -49,11 +49,11 @@ toggle = matchState Hidden Visible
 data Action = Toggle
   deriving stock (Show, Read)
 
-toggler ∷ Component State Action
+toggler ∷ Applicative m ⇒ Component m State Action
 toggler =
   Component
     { render = _render
-    , update = \oldState Toggle → toggle oldState
+    , update = \oldState Toggle → pure $ toggle oldState
     , children = Map.singleton childSlot StatefulComponent.new
     , parseAction = parseActionField "action"
     }

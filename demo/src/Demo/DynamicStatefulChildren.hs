@@ -37,14 +37,14 @@ data State = State {titles ∷ [Text], currentTab ∷ Natural}
 newtype Action = ActivateTab Natural
   deriving newtype (Show, Read)
 
-new ∷ ComponentWithState
+new ∷ Applicative m ⇒ ComponentWithState m
 new = statefulComponent tabPanel State {titles = initialTitles, currentTab = 0}
 
-tabPanel ∷ Component State Action
+tabPanel ∷ Applicative m ⇒ Component m State Action
 tabPanel =
   Component
     { render = _render
-    , update = \state (ActivateTab i) → state {currentTab = i}
+    , update = \state (ActivateTab i) → pure state {currentTab = i}
     , parseAction = parseActionField "tab"
     , children = Map.fromList do
         zip [0 ..] (fmap (toSnd makeTab) initialTitles) <&> \(i, (_title, c)) →
@@ -69,13 +69,13 @@ _render path State {..} renderSlot =
 initialTitles ∷ [Text]
 initialTitles = ["Music", "Videos", "Documents", "Pictures"]
 
-makeTab ∷ Text → ComponentWithState
+makeTab ∷ Applicative m ⇒ Text → ComponentWithState m
 makeTab title =
   statefulComponent
     Component
       { parseAction = const pass
       , children = mempty
-      , update = \(counter ∷ Natural) (_action ∷ ()) → counter + 1
+      , update = \(counter ∷ Natural) (_action ∷ ()) → pure (counter + 1)
       , render = \path counter _renderSlot → do
           div_ [class_ "component content"] do
             div_ [class_ "block"] do

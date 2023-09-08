@@ -32,7 +32,7 @@ import Shroomz.Component.Path qualified as Path
 import Shroomz.Component.Slot (Slot (SlotNamed))
 import Prelude hiding (State)
 
-app ∷ Shroomz
+app ∷ Applicative m ⇒ Shroomz m
 app =
   Shroomz.new
     (statelessComponent indexComponent)
@@ -43,7 +43,7 @@ type State = ()
 data Action = NavigateTo
   deriving stock (Show, Read)
 
-indexComponent ∷ Component State Action
+indexComponent ∷ Applicative m ⇒ Component m State Action
 indexComponent =
   Component
     { render = _render
@@ -57,9 +57,9 @@ indexComponent =
           ]
     }
 
-_update ∷ State → Action → State
+_update ∷ Applicative m ⇒ State → Action → m State
 _update _ = \case
-  NavigateTo → ()
+  NavigateTo → pure ()
 
 _render ∷ ComponentPath → State → (Slot → Html_) → Html_
 _render path _state _renderSlot =

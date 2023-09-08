@@ -6,6 +6,7 @@ module Shroomz
   , updatePath
   , diagnosticInfo
   , toWai
+  , toWaiIO
   ) where
 
 import Data.List.NonEmpty qualified as NE
@@ -31,32 +32,34 @@ import Shroomz.Component.Path qualified as Path
 import Web.FormUrlEncoded (urlDecodeForm)
 import Prelude hiding (get, state)
 
-data Shroomz = Shroomz
-  { components ∷ Map ComponentPath ComponentWithState
+data Shroomz m = Shroomz
+  { components ∷ Map ComponentPath (ComponentWithState m)
   , bodyWrapper ∷ BodyWrapper
   }
 
 newtype BodyWrapper = BodyWrapper {wrapBody ∷ Html_ → Html_}
 
 -- | Create a new app with a single root component.
-new ∷ ComponentWithState → BodyWrapper → Shroomz
+new ∷ ComponentWithState m → BodyWrapper → Shroomz m
 new root bodyWrapper = Shroomz {components = componentsFromRoot root, ..}
 
-componentsFromRoot ∷ ComponentWithState → Map ComponentPath ComponentWithState
+componentsFromRoot
+  ∷ ComponentWithState m
+  → Map ComponentPath (ComponentWithState m)
 componentsFromRoot = go Path.Root
  where
   go
     ∷ ComponentPath
-    → ComponentWithState
-    → Map ComponentPath ComponentWithState
+    → ComponentWithState m
+    → Map ComponentPath (ComponentWithState m)
   go path cws@(ComponentWithState Component {children} _) =
     Map.singleton path cws
       <> Map.foldMapWithKey (go . Path.snocSlot path) children
 
-findComponent ∷ Shroomz → ComponentPath → Maybe ComponentWithState
+findComponent ∷ Shroomz m → ComponentPath → Maybe (ComponentWithState m)
 findComponent app path = Map.lookup path (components app)
 
-getComponent ∷ Shroomz → ComponentPath → ComponentWithState
+getComponent ∷ Applicative m ⇒ Shroomz m → ComponentPath → ComponentWithState m
 getComponent app path = fromMaybe noComponent (findComponent app path)
  where
   noComponent =
@@ -64,20 +67,26 @@ getComponent app path = fromMaybe noComponent (findComponent app path)
       Component
         { render = \_path _state _children →
             "Component not found: " <> fromString (toString $ Path.render path)
-        , update = const
+        , update = \_state _action → pure _state
         , parseAction = const Nothing
         , children = mempty
         }
 
 updateComponentState
-  ∷ Shroomz → ComponentPath → (∀ s m. Component s m → s → s) → Shroomz
+  ∷ Monad m
+  ⇒ Shroomz m
+  → ComponentPath
+  → (∀ s a. Component m s a → s → m s)
+  → m (Shroomz m)
 updateComponentState app path f =
-  app {components = Map.adjust updateComponentWithState path (components app)}
- where
-  updateComponentWithState cws = withComponentWithState cws \comp state →
-    ComponentWithState comp (f comp state)
+  case Map.lookup path (components app) of
+    Nothing → pure app
+    Just cs → do
+      cs' ← withComponentWithState cs \comp state →
+        ComponentWithState comp <$> f comp state
+      pure app {components = Map.insert path cs' (components app)}
 
-renderPath ∷ Shroomz → ComponentPath → Html_
+renderPath ∷ Applicative m ⇒ Shroomz m → ComponentPath → Html_
 renderPath app path =
   withComponentWithState (getComponent app path) \comp state → do
     render comp path state \slot → do
@@ -88,48 +97,62 @@ renderPath app path =
           fromString . toString $
             "Component not found: " <> Path.render cpath
  where
-  renderChild ∷ ComponentPath → ComponentWithState → Html_
+  renderChild ∷ ComponentPath → ComponentWithState m → Html_
   renderChild cpath component =
     withComponentWithState component \comp state →
       render comp cpath state (renderPath app . Path.snocSlot cpath)
 
-updatePath ∷ Shroomz → ComponentPath → LByteString → (Shroomz, Html_)
-updatePath app path body = (app', renderPath app' path)
- where
-  app' = updateComponentState app path \comp state →
+updatePath
+  ∷ Monad m
+  ⇒ Shroomz m
+  → ComponentPath
+  → LByteString
+  → m (Shroomz m, Html_)
+updatePath app path body = do
+  app' ← updateComponentState app path \comp state →
     case urlDecodeForm body of
-      Left _err → state
+      Left _err → pure state
       Right form →
         case parseAction comp form of
-          Nothing → state
+          Nothing → pure state
           Just action → update comp state action
+  pure (app', renderPath app' path)
 
-diagnosticInfo ∷ MonadIO m ⇒ Shroomz → m ()
-diagnosticInfo Shroomz {..} = liftIO do
+diagnosticInfo ∷ Shroomz m → IO ()
+diagnosticInfo Shroomz {..} = do
   putTextLn "Shroomz components:"
   for_ (Map.toList components) \(path, _) → do
     putTextLn $ Path.render path
 
-toWai ∷ Shroomz → IO (Int, Wai.Application)
-toWai initialApp = do
+toWai
+  ∷ ∀ m
+   . Monad m
+  ⇒ Shroomz m
+  → (∀ a. m a → IO a)
+  → IO (Int, Wai.Application)
+toWai initialApp runM = do
   Shroomz.diagnosticInfo initialApp
   var ← newTVarIO initialApp
   pure $ (3000,) $ \request withResponse → do
-    app ← readTVarIO var
+    app ← liftIO $ readTVarIO var
     let headers = Wai.requestHeaders request
     let path =
           NE.nonEmpty (Wai.pathInfo request)
             & maybe Path.Root Path.fromInfo
     case parseMethod (Wai.requestMethod request) of
-      Right GET → withResponse $ respondGet app (htmxInfo headers) path
+      Right GET →
+        withResponse $ respondGet app (htmxInfo headers) path
       Right POST → do
         body ← Wai.consumeRequestBodyLazy request
-        let (app', response) = respondPost app path body
+        (app', response) ← runM $ respondPost app path body
         atomically $ writeTVar var app'
         withResponse response
       _ → withResponse $ Wai.responseBuilder methodNotAllowed405 [] mempty
 
-respondGet ∷ Shroomz → HtmxInfo → ComponentPath → Wai.Response
+toWaiIO ∷ Shroomz IO → IO (Int, Wai.Application)
+toWaiIO shroomz = toWai shroomz identity
+
+respondGet ∷ Applicative m ⇒ Shroomz m → HtmxInfo → ComponentPath → Wai.Response
 respondGet app HtmxInfo {..} path = do
   let markup = Shroomz.renderPath app path
   let responseBody =
@@ -138,13 +161,17 @@ respondGet app HtmxInfo {..} path = do
   let responseHeaders = []
   Wai.responseLBS ok200 responseHeaders responseBody
 
-respondPost ∷ Shroomz → ComponentPath → LByteString → (Shroomz, Wai.Response)
-respondPost app path body =
-  (updatedApp, Wai.responseLBS ok200 responseHeaders responseBody)
- where
-  responseHeaders = []
-  responseBody = Lucid.renderBS markup
-  (updatedApp, markup) = Shroomz.updatePath app path body
+respondPost
+  ∷ Monad m
+  ⇒ Shroomz m
+  → ComponentPath
+  → LByteString
+  → m (Shroomz m, Wai.Response)
+respondPost app path body = do
+  (updatedApp, markup) ← Shroomz.updatePath app path body
+  let responseHeaders = []
+      responseBody = Lucid.renderBS markup
+  pure (updatedApp, Wai.responseLBS ok200 responseHeaders responseBody)
 
 newtype HtmxInfo = HtmxInfo {isHtmxRequest ∷ Bool}
 
