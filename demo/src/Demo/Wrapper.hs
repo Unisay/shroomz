@@ -1,4 +1,4 @@
-module Wrapper where
+module Demo.Wrapper where
 
 import Lucid.Extended
 

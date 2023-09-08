@@ -4,6 +4,7 @@ import Data.Map.Strict qualified as Map
 import Demo.DynamicStatefulChildren qualified as DynamicStatefulChildren
 import Demo.ParentChild qualified as ParentChild
 import Demo.StatefulComponent qualified as StatefulComponent
+import Demo.Wrapper qualified as Wrapper
 import Lucid.Extended
   ( Html_
   , ToHtml (toHtml)
@@ -24,7 +25,7 @@ import Lucid.Extended
   , thead_
   , tr_
   )
-import Shroomz (Shroomz, new)
+import Shroomz (BodyWrapper (..), Shroomz, new)
 import Shroomz.Component (Component (..), parseActionField, statelessComponent)
 import Shroomz.Component.Path (ComponentPath, snocSlot)
 import Shroomz.Component.Path qualified as Path
@@ -32,7 +33,10 @@ import Shroomz.Component.Slot (Slot (SlotNamed))
 import Prelude hiding (State)
 
 app ∷ Shroomz
-app = Shroomz.new (statelessComponent indexComponent)
+app =
+  Shroomz.new
+    (statelessComponent indexComponent)
+    BodyWrapper {wrapBody = Wrapper.wrapBody}
 
 type State = ()
 

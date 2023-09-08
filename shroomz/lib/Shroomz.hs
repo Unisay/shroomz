@@ -1,13 +1,25 @@
 module Shroomz
   ( Shroomz
+  , BodyWrapper (..)
   , new
   , renderPath
   , updatePath
   , diagnosticInfo
+  , toWai
   ) where
 
+import Data.List.NonEmpty qualified as NE
 import Data.Map.Strict qualified as Map
 import Lucid.Extended (Html_)
+import Lucid.Extended qualified as Lucid
+import Network.HTTP.Types
+  ( Header
+  , StdMethod (GET, POST)
+  , methodNotAllowed405
+  , ok200
+  , parseMethod
+  )
+import Network.Wai qualified as Wai
 import Shroomz.Component
   ( Component (..)
   , ComponentWithState (..)
@@ -19,11 +31,16 @@ import Shroomz.Component.Path qualified as Path
 import Web.FormUrlEncoded (urlDecodeForm)
 import Prelude hiding (get, state)
 
-newtype Shroomz = Shroomz {components ∷ Map ComponentPath ComponentWithState}
+data Shroomz = Shroomz
+  { components ∷ Map ComponentPath ComponentWithState
+  , bodyWrapper ∷ BodyWrapper
+  }
+
+newtype BodyWrapper = BodyWrapper {wrapBody ∷ Html_ → Html_}
 
 -- | Create a new app with a single root component.
-new ∷ ComponentWithState → Shroomz
-new root = Shroomz {components = componentsFromRoot root}
+new ∷ ComponentWithState → BodyWrapper → Shroomz
+new root bodyWrapper = Shroomz {components = componentsFromRoot root, ..}
 
 componentsFromRoot ∷ ComponentWithState → Map ComponentPath ComponentWithState
 componentsFromRoot = go Path.Root
@@ -92,3 +109,47 @@ diagnosticInfo Shroomz {..} = liftIO do
   putTextLn "Shroomz components:"
   for_ (Map.toList components) \(path, _) → do
     putTextLn $ Path.render path
+
+toWai ∷ Shroomz → IO (Int, Wai.Application)
+toWai initialApp = do
+  Shroomz.diagnosticInfo initialApp
+  var ← newTVarIO initialApp
+  pure $ (3000,) $ \request withResponse → do
+    app ← readTVarIO var
+    let headers = Wai.requestHeaders request
+    let path =
+          NE.nonEmpty (Wai.pathInfo request)
+            & maybe Path.Root Path.fromInfo
+    case parseMethod (Wai.requestMethod request) of
+      Right GET → withResponse $ respondGet app (htmxInfo headers) path
+      Right POST → do
+        body ← Wai.consumeRequestBodyLazy request
+        let (app', response) = respondPost app path body
+        atomically $ writeTVar var app'
+        withResponse response
+      _ → withResponse $ Wai.responseBuilder methodNotAllowed405 [] mempty
+
+respondGet ∷ Shroomz → HtmxInfo → ComponentPath → Wai.Response
+respondGet app HtmxInfo {..} path = do
+  let markup = Shroomz.renderPath app path
+  let responseBody =
+        Lucid.renderBS $
+          if isHtmxRequest then markup else wrapBody (bodyWrapper app) markup
+  let responseHeaders = []
+  Wai.responseLBS ok200 responseHeaders responseBody
+
+respondPost ∷ Shroomz → ComponentPath → LByteString → (Shroomz, Wai.Response)
+respondPost app path body =
+  (updatedApp, Wai.responseLBS ok200 responseHeaders responseBody)
+ where
+  responseHeaders = []
+  responseBody = Lucid.renderBS markup
+  (updatedApp, markup) = Shroomz.updatePath app path body
+
+newtype HtmxInfo = HtmxInfo {isHtmxRequest ∷ Bool}
+
+htmxInfo ∷ [Header] → HtmxInfo
+htmxInfo headers = HtmxInfo {isHtmxRequest = _isHtmxRequest}
+ where
+  _isHtmxRequest =
+    headers & any \(name, value) → name == "HX-Request" && value == "true"

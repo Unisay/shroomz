@@ -1,0 +1,74 @@
+cabal-version: 3.4
+name:          shroomz
+version:       0.1.0.0
+synopsis:      Shroomz: component-based web framework
+license:       MIT
+author:        Unisay
+maintainer:    Unisay@users.noreply.github.com
+category:      Web
+build-type:    Simple
+
+common opts
+  default-language:   GHC2021
+  default-extensions:
+    BlockArguments
+    DataKinds
+    DerivingStrategies
+    LambdaCase
+    NamedFieldPuns
+    OverloadedStrings
+    PatternSynonyms
+    RecordWildCards
+    TypeApplications
+    TypeFamilies
+    TypeOperators
+    UnicodeSyntax
+    ViewPatterns
+
+  ghc-options:
+    -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wmissing-deriving-strategies -Wunused-foralls -Wunused-foralls
+    -fprint-explicit-foralls -fprint-explicit-kinds
+
+  build-depends:
+    , base    ^>=4.18
+    , relude  ^>=1.2
+    , warp    ^>=3.3.28
+
+  mixins:
+    base hiding (Prelude),
+    relude (Relude as Prelude, Relude.Container.One),
+    relude
+
+library
+  import:          opts
+  hs-source-dirs:  lib
+  build-depends:
+    , data-default-class     ^>=0.1.2
+    , foreign-store          ^>=0.2
+    , http-api-data          ^>=0.5
+    , http-media             ^>=0.8
+    , http-types             ^>=0.12.3
+    , lucid2                 ^>=0.0.20230706
+    , pretty-show            ^>=1.10
+    , scotty                 ^>=0.12.1
+    , some                   ^>=1.0.5
+    , string-interpolate     ^>=0.3.2.1
+    , wai                    ^>=3.2.3
+    , wai-extra              ^>=3.1.13
+    , wai-middleware-static  ^>=0.9.2
+
+  exposed-modules:
+    Lucid.Extended
+    Lucid.Hx
+    Shroomz
+    Shroomz.Component
+    Shroomz.Component.Path
+    Shroomz.Component.Slot
+
+test-suite shroomz-test
+  import:         opts
+  type:           exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is:        Main.hs
+  build-depends:  shroomz
