@@ -23,13 +23,6 @@
       perSystem = { config, self', inputs', pkgs, system, ... }:
         let hpkgs = pkgs.haskellPackages;
         in {
-          # Per-system attributes can be defined here. The self' and inputs'
-          # module parameters provide easy access to attributes of the same
-          # system.
-
-          # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;
-          packages.default = pkgs.hello;
-
           devenv = {
             shells.default = {
               name = "shroomz";
@@ -42,10 +35,9 @@
 
               # https://devenv.sh/reference/options/
               packages = [
-                config.packages.default
                 hpkgs.cabal-fmt
                 hpkgs.hlint
-                hpkgs.fourmolu_0_13_0_0
+                hpkgs.fourmolu_0_13_1_0
                 pkgs.just
               ];
 
@@ -53,19 +45,10 @@
                 enable = true;
                 package = pkgs.haskell.compiler.ghc96;
               };
-
-              enterShell = ''
-                haskell-language-server-wrapper --version
-              '';
             };
           };
 
         };
-      flake = {
-        # The usual flake attributes can be defined here, including system-
-        # agnostic ones like nixosModule and system-enumerating ones, although
-        # those are more easily expressed in perSystem.
-
-      };
+      flake = { };
     };
 }
