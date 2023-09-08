@@ -129,11 +129,11 @@ toWai
    . Monad m
   ⇒ Shroomz m
   → (∀ a. m a → IO a)
-  → IO (Int, Wai.Application)
+  → IO Wai.Application
 toWai initialApp runM = do
   Shroomz.diagnosticInfo initialApp
   var ← newTVarIO initialApp
-  pure $ (3000,) $ \request withResponse → do
+  pure \request withResponse → do
     app ← liftIO $ readTVarIO var
     let headers = Wai.requestHeaders request
     let path =
@@ -149,7 +149,7 @@ toWai initialApp runM = do
         withResponse response
       _ → withResponse $ Wai.responseBuilder methodNotAllowed405 [] mempty
 
-toWaiIO ∷ Shroomz IO → IO (Int, Wai.Application)
+toWaiIO ∷ Shroomz IO → IO Wai.Application
 toWaiIO shroomz = toWai shroomz identity
 
 respondGet ∷ Applicative m ⇒ Shroomz m → HtmxInfo → ComponentPath → Wai.Response
