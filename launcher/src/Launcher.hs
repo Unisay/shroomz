@@ -1,8 +1,9 @@
 module Launcher where
 
 import Data.Map.Strict qualified as Map
-import Launcher.Processes qualified as Processes
-import Layout (bodyWrapper)
+import Launcher.AppM (AppM)
+import Launcher.Shroom.Layout (bodyWrapper)
+import Launcher.Shroom.Processes qualified as Processes
 import Lucid.Extended
 import Shroomz (Shroomz, initApp)
 import Shroomz.Component (Component (..), ComponentData (..), SomeComponent (..))
@@ -11,13 +12,13 @@ import Shroomz.Component.Slot (Slot (..))
 import Web.HttpApiData (toUrlPiece)
 import Prelude hiding (State, state)
 
-initApp ∷ IO (Shroomz IO)
+initApp ∷ AppM (Shroomz AppM)
 initApp = Shroomz.initApp rootComponent bodyWrapper
 
 type Action = ()
 type State = ()
 
-rootComponent ∷ Component IO State Action
+rootComponent ∷ Component AppM State Action
 rootComponent =
   Component
     { parseAction = \_form → pass
@@ -27,7 +28,7 @@ rootComponent =
  where
   slot = SlotNamed "processes"
 
-  initialise ∷ IO (ComponentData IO State)
+  initialise ∷ AppM (ComponentData AppM State)
   initialise =
     pure
       ComponentData

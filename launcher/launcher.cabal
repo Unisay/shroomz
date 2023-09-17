@@ -46,6 +46,7 @@ executable launcher
     , string-interpolate     ^>=0.3.2.1
     , time                   ^>=1.12
     , typed-process          ^>=0.2.8
+    , unliftio               ^>=0.2.25
     , wai                    ^>=3.2.3
     , wai-extra              ^>=3.1.13
     , wai-middleware-static  ^>=0.9.2
@@ -54,5 +55,8 @@ executable launcher
 
   other-modules:
     Launcher
-    Launcher.Processes
-    Layout
+    Launcher.AppM
+    Launcher.Data.Process
+    Launcher.Logic.Processes
+    Launcher.Shroom.Layout
+    Launcher.Shroom.Processes

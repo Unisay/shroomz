@@ -1,4 +1,4 @@
-module Layout (bodyWrapper) where
+module Launcher.Shroom.Layout (bodyWrapper) where
 
 import Lucid.Extended
 import Shroomz (BodyWrapper (..))
