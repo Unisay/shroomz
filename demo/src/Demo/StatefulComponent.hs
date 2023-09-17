@@ -1,6 +1,4 @@
-module Demo.StatefulComponent
-  ( new
-  ) where
+module Demo.StatefulComponent (component) where
 
 import Lucid.Extended
   ( Attributes
@@ -18,30 +16,26 @@ import Lucid.Extended
 import Lucid.Hx (hxPost_, hxSwap_, hxTarget_, hxTrigger_)
 import Shroomz.Component
   ( Component (..)
-  , ComponentWithState (..)
+  , ComponentData (ComponentData, children, userState)
   , parseActionField
-  , statefulComponent
   )
 import Shroomz.Component.Path (ComponentPath)
 import Shroomz.Component.Slot (Slot)
 import Web.HttpApiData (ToHttpApiData (toUrlPiece))
 import Prelude hiding (State, state)
 
-new ∷ Applicative m ⇒ ComponentWithState m
-new = statefulComponent counter 42
-
 type State = Integer
 
 data Action = Decrement | Increment
   deriving stock (Show, Read)
 
-counter ∷ Applicative m ⇒ Component m State Action
-counter =
+component ∷ Applicative m ⇒ Component m State Action
+component =
   Component
-    { render = _render
+    { initialise = pure ComponentData {children = mempty, userState = 0}
+    , render = _render
     , update = _update
     , parseAction = parseActionField "action"
-    , children = mempty
     }
 
 _update ∷ Applicative m ⇒ State → Action → m State

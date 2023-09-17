@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-for i in {0..30}; do
+for i in {0..6}; do
   echo "$i"
   date
   sleep 1
