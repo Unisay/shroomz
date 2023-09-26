@@ -14,5 +14,25 @@
     },
     "[shellscript]": {
         "editor.defaultFormatter": "foxundermoon.shell-format"
-    }
+    },
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#3e9fba",
+        "activityBar.background": "#3e9fba",
+        "activityBar.foreground": "#15202b",
+        "activityBar.inactiveForeground": "#15202b99",
+        "activityBarBadge.background": "#efcfe8",
+        "activityBarBadge.foreground": "#15202b",
+        "commandCenter.border": "#e7e7e799",
+        "sash.hoverBorder": "#3e9fba",
+        "statusBar.background": "#317e94",
+        "statusBar.foreground": "#e7e7e7",
+        "statusBarItem.hoverBackground": "#3e9fba",
+        "statusBarItem.remoteBackground": "#317e94",
+        "statusBarItem.remoteForeground": "#e7e7e7",
+        "titleBar.activeBackground": "#317e94",
+        "titleBar.activeForeground": "#e7e7e7",
+        "titleBar.inactiveBackground": "#317e9499",
+        "titleBar.inactiveForeground": "#e7e7e799"
+    },
+    "peacock.color": "#317e94"
 }

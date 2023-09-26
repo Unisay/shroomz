@@ -41,6 +41,8 @@ executable launcher
     , base                   ^>=4.18
     , concurrent-supply      ^>=0.1.8
     , http-api-data          ^>=0.5
+    , path                   ^>=0.9.2
+    , path-io                ^>=1.8.1
     , relude                 ^>=1.2
     , shroomz
     , string-interpolate     ^>=0.3.2.1
