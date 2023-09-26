@@ -1,12 +1,12 @@
 default:
   @just --list
 
-# run dev derver
-dev:
+# run dev derver for the target app
+dev target='shroomz-demo':
   #!/usr/bin/env bash
-  cabal run shroomz-demo &
+  cabal run {{target}} &
   watchman-make -p '**/*.hs' '**/*.cabal' \
-    -r 'clear; killall -q -s HUP shroomz-demo cabal; cabal run shroomz-demo &'
+    -r 'clear; killall -q -s HUP {{target}} cabal; cabal run {{target}} &'
   wait
 
 build:

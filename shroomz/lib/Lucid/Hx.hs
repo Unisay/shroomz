@@ -107,6 +107,9 @@ hxTrigger_ = makeAttributes "data-hx-trigger"
 hxVals_ ∷ Text → Attributes
 hxVals_ = makeAttributes "data-hx-vals"
 
+hxAction_ ∷ Show value ⇒ value → Attributes
+hxAction_ action = hxVals_ $ "{\"action\": \"" <> show action <> "\"}"
+
 -- | <https://htmx.org/attributes/hx-ws/>
 hxWs_ ∷ Text → Attributes
 hxWs_ = makeAttributes "data-hx-ws"

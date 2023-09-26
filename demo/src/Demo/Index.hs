@@ -1,4 +1,4 @@
-module Demo.Index (app) where
+module Demo.Index (initApp) where
 
 import Data.Map.Strict qualified as Map
 import Demo.DynamicStatefulChildren qualified as DynamicStatefulChildren
@@ -25,36 +25,53 @@ import Lucid.Extended
   , thead_
   , tr_
   )
-import Shroomz (BodyWrapper (..), Shroomz, new)
-import Shroomz.Component (Component (..), parseActionField, statelessComponent)
+import Shroomz (BodyWrapper (..), Shroomz)
+import Shroomz qualified
+import Shroomz.Component
+  ( Component (..)
+  , ComponentData (..)
+  , SomeComponent (..)
+  , parseActionField
+  )
 import Shroomz.Component.Path (ComponentPath, snocSlot)
 import Shroomz.Component.Path qualified as Path
 import Shroomz.Component.Slot (Slot (SlotNamed))
 import Prelude hiding (State)
 
-app ∷ Applicative m ⇒ Shroomz m
-app =
-  Shroomz.new
-    (statelessComponent indexComponent)
-    BodyWrapper {wrapBody = Wrapper.wrapBody}
+initApp ∷ Monad m ⇒ m (Shroomz m)
+initApp = Shroomz.initApp index BodyWrapper {wrapBody = Wrapper.wrapBody}
 
 type State = ()
 
 data Action = NavigateTo
   deriving stock (Show, Read)
 
-indexComponent ∷ Applicative m ⇒ Component m State Action
-indexComponent =
+index ∷ Applicative m ⇒ Component m State Action
+index =
   Component
     { render = _render
     , update = _update
     , parseAction = parseActionField "action"
-    , children =
-        Map.fromList
-          [ (slotStatefulComponent, StatefulComponent.new)
-          , (slotParentStatefulChild, ParentChild.new)
-          , (slotDynamicStatefulChildren, DynamicStatefulChildren.new)
-          ]
+    , initialise =
+        pure
+          ComponentData
+            { children =
+                Map.fromList
+                  [
+                    ( slotStatefulComponent
+                    , SomeComponent StatefulComponent.component
+                    )
+                  ,
+                    ( slotParentStatefulChild
+                    , SomeComponent ParentChild.component
+                    )
+                  ,
+                    ( slotDynamicStatefulChildren
+                    , SomeComponent DynamicStatefulChildren.component
+                    )
+                  ]
+            , userState = ()
+            }
     }
 
 _update ∷ Applicative m ⇒ State → Action → m State
@@ -73,9 +90,9 @@ _render path _state _renderSlot =
           th_ [colspan_ "2"] "Link"
           th_ none_
       tbody_ do
-        for_ tableData \(index, description, slot) → tr_ do
+        for_ tableData \(idx, description, slot) → tr_ do
           let href = Path.render $ snocSlot path slot
-          td_ $ fromString $ show index
+          td_ $ fromString $ show idx
           td_ description
           td_ [class_ "has-text-right"] do a_ [href_ href] (toHtml href)
           td_ [style_ "vertical-align:middle"] do

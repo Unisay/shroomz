@@ -3,6 +3,9 @@ cradle:
     - path: "demo/src"
       component: "shroomz-demo:exe:shroomz-demo"
 
+    - path: "launcher/src"
+      component: "launcher:exe:launcher"
+
     - path: "shroomz/lib"
       component: "lib:shroomz"
 

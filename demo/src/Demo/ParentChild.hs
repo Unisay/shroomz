@@ -1,8 +1,6 @@
 {-# LANGUAGE QuasiQuotes #-}
 
-module Demo.ParentChild
-  ( new
-  ) where
+module Demo.ParentChild (component) where
 
 import Data.Map.Strict qualified as Map
 import Data.String.Interpolate (__i)
@@ -23,17 +21,14 @@ import Lucid.Extended
 import Lucid.Hx (hxPost_, hxSwap_, hxTarget_, hxTrigger_)
 import Shroomz.Component
   ( Component (..)
-  , ComponentWithState
+  , ComponentData (ComponentData, children, userState)
+  , SomeComponent (SomeComponent)
   , parseActionField
-  , statefulComponent
   )
 import Shroomz.Component.Path (ComponentPath)
 import Shroomz.Component.Slot (Slot (..))
 import Web.HttpApiData (ToHttpApiData (toUrlPiece))
 import Prelude hiding (State, state)
-
-new ∷ Applicative m ⇒ ComponentWithState m
-new = statefulComponent toggler Visible
 
 data State = Visible | Hidden
   deriving stock (Show, Read)
@@ -49,13 +44,21 @@ toggle = matchState Hidden Visible
 data Action = Toggle
   deriving stock (Show, Read)
 
-toggler ∷ Applicative m ⇒ Component m State Action
-toggler =
+component ∷ Applicative m ⇒ Component m State Action
+component =
   Component
     { render = _render
     , update = \oldState Toggle → pure $ toggle oldState
-    , children = Map.singleton childSlot StatefulComponent.new
     , parseAction = parseActionField "action"
+    , initialise =
+        pure
+          ComponentData
+            { userState = Visible
+            , children =
+                Map.singleton
+                  childSlot
+                  (SomeComponent StatefulComponent.component)
+            }
     }
 
 _render ∷ ComponentPath → State → (Slot → Html_) → Html_

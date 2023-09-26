@@ -17,9 +17,9 @@ import Prelude hiding (get)
 main ∷ IO ()
 main = withUtf8 do
   hSetBuffering stdout LineBuffering
-  waiApplication ← Shroomz.toWaiIO Index.app
+  waiApplication ← Shroomz.toWai =<< Index.initApp
   let port = 3000
-  putTextLn $ "\nShroomz Showcase is listening on http://localhost:" <> show port
+  putTextLn $ "\nShroomz Demo is listening on http://localhost:" <> show port
   Warp.run port $ middleware waiApplication
 
 middleware ∷ Wai.Middleware

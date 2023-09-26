@@ -1,5 +1,6 @@
 module Lucid.Extended
   ( module Lucid
+  , module Hx
   , Html_
   , none_
   , classes_
@@ -12,6 +13,7 @@ module Lucid.Extended
 
 import Lucid
 import Lucid.Base (makeAttributes, makeElement)
+import Lucid.Hx as Hx
 
 type Html_ = Html ()
 
